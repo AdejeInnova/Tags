@@ -222,30 +222,33 @@ class TagBehavior extends Behavior
             if (empty($tag)) {
                 continue;
             }
-            $existingTag = $this->_tagExists($tag);
+            list($namespace, $label) = $this->_normalizeTag($tag);
+            $existingTag = $this->_tagExists($label, $namespace);
             if (!empty($existingTag)) {
                 $result[] = $common + ['id' => $existingTag];
                 continue;
             }
-            list($id, $label) = $this->_normalizeTag($tag);
-            $result[] = $common + compact(empty($id) ? $df : $pk);
+            $result[] = $common + compact(empty($namespace) ? $df : $pk) + [
+                'namespace' => $namespace,
+                'label' => $label
+            ];
         }
 
         return $result;
     }
 
-    protected function _tagExists($tag)
+    protected function _tagExists($tag, $namespace)
     {
-        $tagsTable = $this->_table->{$this->config('tagsAlias')}->target();
-        $result = $tagsTable->find()
-            ->where([
-                $tagsTable->aliasField('label') => $tag,
-            ])
-            ->first();
-        if (!empty($result)) {
-            return $result->id;
-        }
-        return null;
+		$tagsTable = $this->_table->{$this->config('tagsAlias')}->target();
+		$where = [$tagsTable->aliasField('label') => $tag];
+		if (!empty($namespace)) {
+			$where[$tagsTable->aliasField('namespace')] = $namespace;
+		}
+		$result = $tagsTable->find()->where($where)->first();
+		if (!empty($result)) {
+			return $result->id;
+		}
+		return null;
     }
 
     /**
@@ -257,15 +260,18 @@ class TagBehavior extends Behavior
      */
     protected function _normalizeTag($tag)
     {
-        $id = null;
+        $namespace = null;
         $label = $tag;
         $separator = $this->config('separator');
         if (strpos($tag, $separator) !== false) {
-            list($id, $label) = explode($separator, $tag);
+            list($namespace, $label) = explode($separator, $tag);
         }
-
+        trim($namespace);
+        if (empty($namespace)) {
+            $namespace = null;
+        }
         return [
-            trim($id),
+            $namespace,
             trim($label)
         ];
     }

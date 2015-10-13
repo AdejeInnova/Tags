@@ -72,54 +72,61 @@ class TagBehaviorTest extends TestCase
 
     public function testNormalizeTags()
     {
-        $result = $this->Behavior->normalizeTags('foo, 3:foobar, bar');
+        $result = $this->Behavior->normalizeTags('foo, bar:foo, bar');
         $expected = [
-            [
+            0 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'foo',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
+                'namespace' => null
             ],
-            [
-                'id' => 3,
+            1 => [
                 '_joinData' => [
-                    'fk_table' => 'tags_muffins',
+                    'fk_table' => 'tags_muffins'
                 ],
+                'namespace' => 'bar',
+                'label' => 'foo'
             ],
-            [
+            2 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'bar',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
-            ],
+                'namespace' => null
+            ]
         ];
+
         $this->assertEquals($expected, $result);
 
         $result = $this->Behavior->normalizeTags(['foo', 'bar']);
         $expected = [
-            [
+            0 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'foo',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
+                'namespace' => null
             ],
-            [
+            1 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'bar',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
-            ],
+                'namespace' => null
+            ]
         ];
         $this->assertEquals($expected, $result);
 
         $result = $this->Behavior->normalizeTags('first, ');
         $expected = [
-            [
-                'label' => 'first',
+            0 => [
                 '_joinData' => [
-                    'fk_table' => 'tags_muffins',
+                    'fk_table' => 'tags_muffins'
                 ],
-            ],
+                'label' => 'first',
+                'namespace' => null
+            ]
         ];
         $this->assertEquals($expected, $result);
     }
@@ -154,7 +161,7 @@ class TagBehaviorTest extends TestCase
     {
         $data = [
             'name' => 'Muffin',
-            'tags' => '1:Color, 2:Dark Color',
+            'tags' => 'Color, Dark Color',
         ];
 
         $entity = $this->Table->newEntity($data);
@@ -180,7 +187,7 @@ class TagBehaviorTest extends TestCase
     {
         $data = [
             'name' => 'Muffin',
-            'tags' => '1:Color, foo',
+            'tags' => 'Color, foo',
         ];
 
         $entity = $this->Table->newEntity($data);
@@ -204,7 +211,7 @@ class TagBehaviorTest extends TestCase
     {
         $data = [
             'name' => 'Muffin',
-            'tags' => '1:Color, 2:Dark Color',
+            'tags' => 'Color1, Dark Color1',
         ];
 
         $counter = $this->Table->Tags->get(1)->counter;
