@@ -1,11 +1,11 @@
 # Tags
 
 [![Build Status](https://img.shields.io/travis/UseMuffin/Tags/master.svg?style=flat-square)](https://travis-ci.org/UseMuffin/Tags)
-[![Coverage](https://img.shields.io/coveralls/UseMuffin/Tags/master.svg?style=flat-square)](https://coveralls.io/r/UseMuffin/Tags)
+[![Coverage](https://img.shields.io/codecov/c/github/UseMuffin/Tags.svg?style=flat-square)](https://codecov.io/github/UseMuffin/Tags)
 [![Total Downloads](https://img.shields.io/packagist/dt/muffin/tags.svg?style=flat-square)](https://packagist.org/packages/muffin/tags)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 
-{{@TODO description}}
+This plugin allows you to simply tag record in your database with multiple tags.
 
 ## Install
 
@@ -19,11 +19,30 @@ You then need to load the plugin. In `boostrap.php`, something like:
 
 ```php
 \Cake\Core\Plugin::load('Muffin/Tags');
+
+
+## Quick Start Guide
+
+You need to add the column *tag_count* to the taggable table.
+
+Then migrate the tables for the plugin:
+```
+bin/cake migrations migrate -p Muffin/Tags
 ```
 
-## Usage
+Add the behavior:
 
-{{@TODO documentation}}
+```php
+$this->addBehavior('Muffin/Tags.Tag');
+```
+
+And in the view:
+
+```php
+echo $this->Form->input('tags');
+```
+
+Enjoy tagging!
 
 ## Patches & Features
 

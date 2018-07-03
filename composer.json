@@ -29,11 +29,13 @@
         "issues": "https://github.com/usemuffin/tags/issues",
         "source": "https://github.com/usemuffin/tags"
     },
+    "require": {
+        "cakephp/orm": "^3.5"
+    },
     "require-dev": {
-        "cakephp/cakephp": "~3.0",
-        "cakephp/cakephp-codesniffer": "2.*",
-        "phpunit/phpunit": "4.1.*",
-        "muffin/slug": "dev-master"
+        "cakephp/cakephp": "^3.5",
+        "phpunit/phpunit": "^5.7.14|^6.0",
+        "muffin/slug": "^1.4"
     },
     "autoload": {
         "psr-4": {

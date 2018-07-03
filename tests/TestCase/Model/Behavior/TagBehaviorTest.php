@@ -5,6 +5,9 @@ use Cake\ORM\TableRegistry;
 use Cake\TestSuite\TestCase;
 use Muffin\Tags\Model\Behavior\TagBehavior;
 
+/**
+ * TagBehaviorTest
+ */
 class TagBehaviorTest extends TestCase
 {
     public $fixtures = [
@@ -32,12 +35,26 @@ class TagBehaviorTest extends TestCase
         unset($this->Behavior);
     }
 
+    public function testSavingDuplicates()
+    {
+        $entity = $this->Table->newEntity([
+            'name' => 'Duplicate Tags?',
+            'tags' => 'Color, Dark Color'
+        ]);
+        $this->Table->save($entity);
+        $Tags = $this->Table->Tagged->Tags;
+        $count = $Tags->find()->where(['label' => 'Color'])->count();
+        $this->assertEquals(1, $count);
+        $count = $Tags->find()->where(['label' => 'Dark Color'])->count();
+        $this->assertEquals(1, $count);
+    }
+
     public function testDefaultInitialize()
     {
-        $belongsToMany = $this->Table->association('Tags');
+        $belongsToMany = $this->Table->getAssociation('Tags');
         $this->assertInstanceOf('Cake\ORM\Association\BelongsToMany', $belongsToMany);
 
-        $hasMany = $this->Table->association('Tagged');
+        $hasMany = $this->Table->getAssociation('Tagged');
         $this->AssertInstanceOf('Cake\ORM\Association\HasMany', $hasMany);
     }
 
@@ -49,10 +66,10 @@ class TagBehaviorTest extends TestCase
             'taggedAlias' => 'Labelled',
         ]);
 
-        $belongsToMany = $this->Table->association('Labels');
+        $belongsToMany = $this->Table->getAssociation('Labels');
         $this->assertInstanceOf('Cake\ORM\Association\BelongsToMany', $belongsToMany);
 
-        $hasMany = $this->Table->association('Labelled');
+        $hasMany = $this->Table->getAssociation('Labelled');
         $this->assertInstanceOf('Cake\ORM\Association\HasMany', $hasMany);
     }
 
@@ -60,40 +77,58 @@ class TagBehaviorTest extends TestCase
     {
         $result = $this->Behavior->normalizeTags('foo, 3:foobar, bar');
         $expected = [
-            [
+            0 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'foo',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
+                'tag_key' => 'foo'
             ],
-            [
-                'id' => 3,
+            1 => [
                 '_joinData' => [
-                    'fk_table' => 'tags_muffins',
+                    'fk_table' => 'tags_muffins'
                 ],
+                'id' => '3',
+                'tag_key' => '3-foobar'
             ],
-            [
+            2 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'bar',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
-            ],
+                'tag_key' => 'bar'
+            ]
         ];
         $this->assertEquals($expected, $result);
 
         $result = $this->Behavior->normalizeTags(['foo', 'bar']);
         $expected = [
-            [
+            0 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'foo',
-                '_joinData' => [
-                    'fk_table' => 'tags_muffins',
-                ],
+                'tag_key' => 'foo'
             ],
-            [
+            1 => [
+                '_joinData' => [
+                    'fk_table' => 'tags_muffins'
+                ],
                 'label' => 'bar',
+                'tag_key' => 'bar'
+            ]
+        ];
+
+        $this->assertEquals($expected, $result);
+
+        $result = $this->Behavior->normalizeTags('first, ');
+        $expected = [
+            [
                 '_joinData' => [
                     'fk_table' => 'tags_muffins',
                 ],
+                'label' => 'first',
+                'tag_key' => 'first',
             ],
         ];
         $this->assertEquals($expected, $result);
@@ -109,7 +144,7 @@ class TagBehaviorTest extends TestCase
         $entity = $this->Table->newEntity($data);
 
         $this->assertEquals(2, count($entity->get('tags')));
-        $this->assertTrue($entity->dirty('tags'));
+        $this->assertTrue($entity->isDirty('tags'));
 
         $data = [
             'name' => 'Muffin',
@@ -122,7 +157,7 @@ class TagBehaviorTest extends TestCase
         $entity = $this->Table->newEntity($data);
 
         $this->assertEquals(2, count($entity->get('tags')));
-        $this->assertTrue($entity->dirty('tags'));
+        $this->assertTrue($entity->isDirty('tags'));
     }
 
     public function testMarshalingOnlyExistingTags()
@@ -135,7 +170,7 @@ class TagBehaviorTest extends TestCase
         $entity = $this->Table->newEntity($data);
 
         $this->assertEquals(2, count($entity->get('tags')));
-        $this->assertTrue($entity->dirty('tags'));
+        $this->assertTrue($entity->isDirty('tags'));
 
         $data = [
             'name' => 'Muffin',
@@ -148,7 +183,7 @@ class TagBehaviorTest extends TestCase
         $entity = $this->Table->newEntity($data);
 
         $this->assertEquals(2, count($entity->get('tags')));
-        $this->assertTrue($entity->dirty('tags'));
+        $this->assertTrue($entity->isDirty('tags'));
     }
 
     public function testMarshalingBothNewAndExistingTags()
@@ -161,7 +196,7 @@ class TagBehaviorTest extends TestCase
         $entity = $this->Table->newEntity($data);
 
         $this->assertEquals(2, count($entity->get('tags')));
-        $this->assertTrue($entity->dirty('tags'));
+        $this->assertTrue($entity->isDirty('tags'));
     }
 
     public function testMarshalingWithEmptyTagsString()
@@ -172,7 +207,7 @@ class TagBehaviorTest extends TestCase
         ];
 
         $entity = $this->Table->newEntity($data);
-        $this->assertEquals(0, count($entity->get('tags')));
+        $this->assertEquals(0, count((array)$entity->get('tags')));
     }
 
     public function testSaveIncrementsCounter()
